@@ -138,9 +138,9 @@ class Vide:
 
     def mu_lm(alpha, beta, range_limits=(-2, 2)):
         """
-        Calculate the line average (mu) of the bivariate regression.
+        Calculate the line average (μ) of the bivariate regression.
 
-        $$ \\mu = mean(\alpha) + mean(\beta) * range(x) $$
+        $$ μ = mean(𝛼) + mean( 𝛽 ) * range(x) $$
 
         Parameters
         ----------
@@ -173,7 +173,7 @@ class Vide:
         """
         Calculate the bayesian compatibility interval of bivariate regression.
 
-        $$ \\mu = mean(\alpha) + mean(\beta) * range(x) $$
+        $$ μ = mean(𝛼) + mean( 𝛽 ) * range(x) $$
 
         Parameters
         ----------
@@ -207,15 +207,88 @@ class Vide:
 
         return CI
 
-    def plot_lm(data, alpha, beta, original=False):
+    def plot_lm(outcome, predictor, alpha, beta, title=None,
+                xlabel=None, ylabel=None, linewidth=0.2, figsize=(17, 9),
+                ylim=(-2, 2), xlim=(-2, 2)):
         """
         Plot posterioris of the linear model.
+
+        Parameters
+        ----------
+        outcome : array_like
+            The variable outcome of linear model
+
+        predictor : array_like
+            The variable preditor of linear model
+
+        alpha : array_like
+            Posteriori of alpha (𝛼)
+
+        beta : array_like
+            Posteriori of beta (𝛽)
+
+        range_limits : tuple(min_value=-2, max_value=2), optional
+            A tuple with two values, minimum and maximum of the range.
+
+        title : string, optional
+            Title of graph
+
+        xlabel : string, optional
+            Axis X label
+
+        ylabel : string, optional
+            Axis Y label
+
+        linewidth : float, optional
+            The width of the line
+
+        figsize : tuple, optional
+            Set the figsize of the figure
+
+        xlim : tuple
+            Set the plot xlim
+
+        ylim : tuple
+            Set the plot ylim
+
+
+        Returns
+        -------
+        Plot tie graph with the mean and CI and the points original data raw.
         """
-        mu_data = np.mean(data)
-        std_data = np.std(data)
+        if not Vide._has_same_length(outcome, predictor):
+            print('Error: Length of outcome and predictor are no equal')
+            return False
 
-        if original:  # Turn in the alpha and beta in same limits of the data
-            alpha = (alpha * std_data) + mu_data  # Alpha non-standardized
-            beta = (beta * std_data) + mu_data  # Beta non-standardized
+        if not Vide._has_same_length(alpha, beta):
+            print('Error: Length of alpha and beta are no equal')
+            return False
 
-        pass
+        # Parameters
+        min_range = min(predictor)
+        max_range = max(predictor)
+        mu_range = np.linspace(min_range, max_range)
+        mu_line = Vide.mu_lm(alpha, beta, range_limits=(min_range, max_range))
+        CI = Vide.CI_lm(alpha, beta, range_limits=(min_range, max_range))
+
+        # Plot data
+        plt.scatter(predictor, outcome)
+
+        # Plot mu
+        plt.plot(mu_range, mu_line, color='black')
+
+        # Plot CI
+        plt.fill_between(mu_range, CI[:, 0], CI[:, 1], color='gray', alpha=0.4)
+
+        plt.grid(ls='--', color='white', linewidth=0.4)
+
+        if title:
+            plt.title(title)
+
+        if xlabel:
+            plt.xlabel(xlabel)
+
+        if ylabel:
+            plt.ylabel(ylabel)
+
+        plt.grid(ls='--', color='white', alpha=0.4)
