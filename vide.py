@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 
 class Vide:
@@ -21,6 +22,9 @@ class Vide:
         if (len(a) != len(b)):
             return False
         return True
+
+    def _is_between_0_1(value):
+        return True if value <=1 and value >= 0 else False
 
     def HPDI(posteriori_samples, credible_mass=0.89):
         """
@@ -280,8 +284,6 @@ class Vide:
         # Plot CI
         plt.fill_between(mu_range, CI[:, 0], CI[:, 1], color='gray', alpha=0.4)
 
-        plt.grid(ls='--', color='white', linewidth=0.4)
-
         if title:
             plt.title(title)
 
@@ -292,3 +294,117 @@ class Vide:
             plt.ylabel(ylabel)
 
         plt.grid(ls='--', color='white', alpha=0.4)
+
+    def summary(posteriori_samples, credible_mass=0.93, rounded=2):
+        """
+        Return the summary of posteriori samples
+
+        Parameters
+        ----------
+        posteriori_samples : stan.Fit
+            Output samples from ajusted Stan (using pystan)
+
+        credible_mass : float [0, 1], optional
+            Value float between (0, 1) that define highest posterior density interval (HPDI)
+            Default credible_mass=0.93
+
+        rounded : integer, optional
+            Value to round values
+            Default rounded=2
+
+        Returns
+        -------
+        DataFrame (Pandas) with all parameter summaries.
+
+            Output example:
+                    mean	std	    7.0%	93.0%
+            -------------------------------------        
+            alpha	-0.01	0.19	-0.36	0.33
+            beta	0.01	0.02	-0.02	0.05
+            sigma	1.46	0.15	1.19	1.73
+
+        """
+
+        if not Vide._is_between_0_1(credible_mass):
+            return False
+
+        # Build the HPDI labels
+        HPDI_lower_bound_label = str(np.round(100 * (1 - credible_mass), 1)) + '%'
+        HPDI_upper_bound_label = str(np.round(100 * credible_mass, 1)) + '%'
+
+        summaries_posterioris = {}
+
+        parameters = posteriori_samples.param_names
+
+        for parameter in parameters:
+
+            sampled_parameter_values = posteriori_samples[parameter].flatten()
+
+            HPDI_parameter_value = Vide.HPDI(sampled_parameter_values, credible_mass)
+
+            summary_parameter = {
+                'mean': round(sampled_parameter_values.mean(), rounded),
+                'std': round(sampled_parameter_values.std(), rounded),
+                HPDI_lower_bound_label : round(HPDI_parameter_value[0], rounded),
+                HPDI_upper_bound_label : round(HPDI_parameter_value[1], rounded),
+            }
+            summaries_posterioris[parameter] = summary_parameter
+            
+        return pd.DataFrame.from_dict(summaries_posterioris, orient='index')
+
+    def plot_forest(posteriori_samples, title=None, xlable=None, ylabel=None):
+        """
+        Plot forest graph from samples
+
+
+        Parameters
+        ----------
+        posteriori_samples : stan.Fit
+            Output samples from ajusted Stan (using pystan)
+
+        title : string, optional
+            Title of graph
+
+        xlabel : string, optional
+            Axis X label
+
+        ylabel : string, optional
+            Axis Y label
+
+        """
+        # IN BUILD
+        return 'In build process'
+
+        min_axis_ = post.iloc[:, 2:4].min().min()
+        max_axis_ = post.iloc[:, 2:4].max().max()
+
+        for i in range(len(post)):
+            plt.plot([min_axis_*1.5, max_axis_*1.5], [i, i], ls='--', color='gray')
+            plt.plot([post.iloc[i, 2], post.iloc[i, 3]], [i, i], color='blue')
+            plt.plot(post.iloc[i, 0], i, 'ko')
+            plt.annotate(post.index[i], (min_axis_*1.5, i+0.2), color='blue')
+            
+
+        if min_axis_ < 0 and max_axis_ > 0:
+            plt.axvline(0, ls='--', color='red', alpha=0.6)
+
+        plt.ylim((-1, len(post)+1))
+        plt.grid(ls='--', color='white', alpha=0.4)
+        
+        ax = plt.gca()
+        ax.axes.yaxis.set_visible(False)
+        
+        if title:
+            plt.title(title)
+
+        if xlabel:
+            plt.xlabel(xlabel)
+
+        if ylabel:
+            plt.ylabel(ylabel)
+
+        plt.grid(ls='--', color='white', alpha=0.4)
+
+        plt.show()
+        
+        return post
