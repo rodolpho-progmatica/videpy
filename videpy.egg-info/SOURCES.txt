@@ -1,0 +1,7 @@
+setup.py
+videpy/__init__.py
+videpy/vide.py
+videpy.egg-info/PKG-INFO
+videpy.egg-info/SOURCES.txt
+videpy.egg-info/dependency_links.txt
+videpy.egg-info/top_level.txt
