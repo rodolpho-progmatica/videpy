@@ -26,6 +26,26 @@ class Vide:
     def _is_between_0_1(value):
         return True if value <=1 and value >= 0 else False
 
+    def _get_HPDI_limits_label(credible_mass):
+        """
+        Get the lower and upper label limits from credible_mass HPDI
+
+        Parameters
+        ----------
+        credible_mass : float [0, 1], optional
+            Value float between (0, 1) that define highest posterior
+            density interval (HPDI)
+
+        Returns
+        -------
+        [str, str] : list
+            List with two positions [HPDI_lower_bound_label, HPDI_upper_bound_label] 
+        """
+        HPDI_lower_bound_label = str(np.round(100 * (1 - credible_mass), 1)) + '%'
+        HPDI_upper_bound_label = str(np.round(100 * credible_mass, 1)) + '%'
+
+        return [HPDI_lower_bound_label, HPDI_upper_bound_label] 
+
     def HPDI(posteriori_samples, credible_mass=0.89):
         """
         Calculate the highest posterior density interval (HPDI).
@@ -328,9 +348,7 @@ class Vide:
         if not Vide._is_between_0_1(credible_mass):
             return False
 
-        # Build the HPDI labels
-        HPDI_lower_bound_label = str(np.round(100 * (1 - credible_mass), 1)) + '%'
-        HPDI_upper_bound_label = str(np.round(100 * credible_mass, 1)) + '%'
+        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(credible_mass)
 
         summaries_posterioris = {}
 
@@ -352,15 +370,18 @@ class Vide:
             
         return pd.DataFrame.from_dict(summaries_posterioris, orient='index')
 
-    def plot_forest(posteriori_samples, title=None, xlable=None, ylabel=None):
+    def plot_forest(posteriori_samples, credible_mass=0.93, title=None, xlabel=None):
         """
         Plot forest graph from samples
-
 
         Parameters
         ----------
         posteriori_samples : stan.Fit
             Output samples from ajusted Stan (using pystan)
+
+        credible_mass : float [0, 1], optional
+            Value float between (0, 1) that define highest posterior density interval (HPDI)
+            Default credible_mass=0.93
 
         title : string, optional
             Title of graph
@@ -368,27 +389,54 @@ class Vide:
         xlabel : string, optional
             Axis X label
 
-        ylabel : string, optional
-            Axis Y label
-
+        Results
+        -------
+        Plot the forest graph.
         """
-        # IN BUILD
-        return 'In build process'
 
-        min_axis_ = post.iloc[:, 2:4].min().min()
-        max_axis_ = post.iloc[:, 2:4].max().max()
+        summary = Vide.summary(posteriori_samples=posteriori_samples, 
+                               credible_mass=credible_mass)
+        
+        parameters = summary.index.to_list()
 
-        for i in range(len(post)):
-            plt.plot([min_axis_*1.5, max_axis_*1.5], [i, i], ls='--', color='gray')
-            plt.plot([post.iloc[i, 2], post.iloc[i, 3]], [i, i], color='blue')
-            plt.plot(post.iloc[i, 0], i, 'ko')
-            plt.annotate(post.index[i], (min_axis_*1.5, i+0.2), color='blue')
+        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(credible_mass)
+        
+        minimum_full_range_HPDI = summary.loc[:, HPDI_lower_bound_label].min()   
+        maximum_full_range_HPDI = summary.loc[:, HPDI_upper_bound_label].max()    
+
+        index_to_line = len(summary)
+
+        plt.figure(figsize=(15, index_to_line + 1))
+
+        for parameter_name, summaries in summary.iterrows():
+            # Plot dashed support line
+            plt.plot([minimum_full_range_HPDI * 1.5, maximum_full_range_HPDI * 1.5], 
+                      [index_to_line, index_to_line],
+                      ls='--', color='gray')
             
+            # Plot HPDI in blue line
+            plt.plot([summaries[HPDI_lower_bound_label], 
+                      summaries[HPDI_upper_bound_label]], 
+                     [index_to_line, index_to_line],
+                     color='blue')
 
-        if min_axis_ < 0 and max_axis_ > 0:
+            # Plot mean point
+            plt.plot(summaries['mean'], index_to_line, 'ko')
+
+            # Plot parameter label
+            plt.annotate(str(parameter_name), 
+                        (minimum_full_range_HPDI * 1.5, index_to_line + 0.2), 
+                        color='blue')
+
+            index_to_line = index_to_line - 1  # Update the graph-floor index
+        
+        # Plot vertical zero-red-line    
+        if minimum_full_range_HPDI < 0 and maximum_full_range_HPDI > 0:
             plt.axvline(0, ls='--', color='red', alpha=0.6)
 
-        plt.ylim((-1, len(post)+1))
+        # Adjust screen plot
+        plt.ylim((0, len(summary)+1))
+
         plt.grid(ls='--', color='white', alpha=0.4)
         
         ax = plt.gca()
@@ -406,5 +454,3 @@ class Vide:
         plt.grid(ls='--', color='white', alpha=0.4)
 
         plt.show()
-        
-        return post
