@@ -24,7 +24,7 @@ class Vide:
         return True
 
     def _is_between_0_1(value):
-        return True if value <=1 and value >= 0 else False
+        return True if value <= 1 and value >= 0 else False
 
     def _get_HPDI_limits_label(credible_mass):
         """
@@ -39,12 +39,13 @@ class Vide:
         Returns
         -------
         [str, str] : list
-            List with two positions [HPDI_lower_bound_label, HPDI_upper_bound_label] 
+            List with two positions [HPDI_lower_bound_label, HPDI_upper_bound_label]
         """
-        HPDI_lower_bound_label = str(np.round(100 * (1 - credible_mass), 1)) + '%'
+        HPDI_lower_bound_label = str(
+            np.round(100 * (1 - credible_mass), 1)) + '%'
         HPDI_upper_bound_label = str(np.round(100 * credible_mass, 1)) + '%'
 
-        return [HPDI_lower_bound_label, HPDI_upper_bound_label] 
+        return [HPDI_lower_bound_label, HPDI_upper_bound_label]
 
     def HPDI(posteriori_samples, credible_mass=0.89):
         """
@@ -338,7 +339,7 @@ class Vide:
 
             Output example:
                     mean	std	    7.0%	93.0%
-            -------------------------------------        
+            -------------------------------------
             alpha	-0.01	0.19	-0.36	0.33
             beta	0.01	0.02	-0.02	0.05
             sigma	1.46	0.15	1.19	1.73
@@ -348,7 +349,8 @@ class Vide:
         if not Vide._is_between_0_1(credible_mass):
             return False
 
-        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(credible_mass)
+        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(
+            credible_mass)
 
         summaries_posterioris = {}
 
@@ -358,19 +360,21 @@ class Vide:
 
             sampled_parameter_values = posteriori_samples[parameter].flatten()
 
-            HPDI_parameter_value = Vide.HPDI(sampled_parameter_values, credible_mass)
+            HPDI_parameter_value = Vide.HPDI(
+                sampled_parameter_values, credible_mass)
 
             summary_parameter = {
                 'mean': round(sampled_parameter_values.mean(), rounded),
                 'std': round(sampled_parameter_values.std(), rounded),
-                HPDI_lower_bound_label : round(HPDI_parameter_value[0], rounded),
-                HPDI_upper_bound_label : round(HPDI_parameter_value[1], rounded),
+                HPDI_lower_bound_label: round(HPDI_parameter_value[0], rounded),
+                HPDI_upper_bound_label: round(HPDI_parameter_value[1], rounded),
             }
             summaries_posterioris[parameter] = summary_parameter
-            
+
         return pd.DataFrame.from_dict(summaries_posterioris, orient='index')
 
-    def plot_forest(posteriori_samples, credible_mass=0.93, title=None, xlabel=None):
+    def plot_forest(posteriori_samples, credible_mass=0.93,
+                    title=None, xlabel=None):
         """
         Plot forest graph from samples
 
@@ -394,15 +398,16 @@ class Vide:
         Plot the forest graph.
         """
 
-        summary = Vide.summary(posteriori_samples=posteriori_samples, 
+        summary = Vide.summary(posteriori_samples=posteriori_samples,
                                credible_mass=credible_mass)
-        
+
         parameters = summary.index.to_list()
 
-        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(credible_mass)
-        
-        minimum_full_range_HPDI = summary.loc[:, HPDI_lower_bound_label].min()   
-        maximum_full_range_HPDI = summary.loc[:, HPDI_upper_bound_label].max()    
+        HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(
+            credible_mass)
+
+        minimum_full_range_HPDI = summary.loc[:, HPDI_lower_bound_label].min()
+        maximum_full_range_HPDI = summary.loc[:, HPDI_upper_bound_label].max()
 
         index_to_line = len(summary)
 
@@ -410,13 +415,14 @@ class Vide:
 
         for parameter_name, summaries in summary.iterrows():
             # Plot dashed support line
-            plt.plot([minimum_full_range_HPDI * 1.5, maximum_full_range_HPDI * 1.5], 
-                      [index_to_line, index_to_line],
-                      ls='--', color='gray')
-            
+            plt.plot(
+                [minimum_full_range_HPDI * 1.5, maximum_full_range_HPDI * 1.5],
+                [index_to_line, index_to_line],
+                ls='--', color='gray')
+
             # Plot HPDI in blue line
-            plt.plot([summaries[HPDI_lower_bound_label], 
-                      summaries[HPDI_upper_bound_label]], 
+            plt.plot([summaries[HPDI_lower_bound_label],
+                      summaries[HPDI_upper_bound_label]],
                      [index_to_line, index_to_line],
                      color='blue')
 
@@ -424,13 +430,13 @@ class Vide:
             plt.plot(summaries['mean'], index_to_line, 'ko')
 
             # Plot parameter label
-            plt.annotate(str(parameter_name), 
-                        (minimum_full_range_HPDI * 1.5, index_to_line + 0.2), 
-                        color='blue')
+            plt.annotate(str(parameter_name),
+                         (minimum_full_range_HPDI * 1.5, index_to_line + 0.2),
+                         color='blue')
 
             index_to_line = index_to_line - 1  # Update the graph-floor index
-        
-        # Plot vertical zero-red-line    
+
+        # Plot vertical zero-red-line
         if minimum_full_range_HPDI < 0 and maximum_full_range_HPDI > 0:
             plt.axvline(0, ls='--', color='red', alpha=0.6)
 
@@ -438,18 +444,15 @@ class Vide:
         plt.ylim((0, len(summary)+1))
 
         plt.grid(ls='--', color='white', alpha=0.4)
-        
+
         ax = plt.gca()
         ax.axes.yaxis.set_visible(False)
-        
+
         if title:
             plt.title(title)
 
         if xlabel:
             plt.xlabel(xlabel)
-
-        if ylabel:
-            plt.ylabel(ylabel)
 
         plt.grid(ls='--', color='white', alpha=0.4)
 
