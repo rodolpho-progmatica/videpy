@@ -1,3 +1,4 @@
 VIDEPY/
 __pycache__/
 .ipynb_checkpoints/
+videpy/__pycache__/
