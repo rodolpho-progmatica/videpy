@@ -1,5 +1,7 @@
+pystan
 numpy
 matplotlib
 pandas
 setuptools
 twine
+notebook

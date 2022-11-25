@@ -1,7 +1,16 @@
+.gitignore
+README.md
+requirements.txt
 setup.py
+update_PyPI.sh
+videpy/LICENSE
+videpy/README.md
+videpy/Vide.ipynb
 videpy/__init__.py
 videpy/vide.py
 videpy.egg-info/PKG-INFO
 videpy.egg-info/SOURCES.txt
 videpy.egg-info/dependency_links.txt
 videpy.egg-info/top_level.txt
+videpy/__pycache__/__init__.cpython-38.pyc
+videpy/__pycache__/vide.cpython-38.pyc

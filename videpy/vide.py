@@ -401,13 +401,31 @@ class Vide:
         summary = Vide.summary(posteriori_samples=posteriori_samples,
                                credible_mass=credible_mass)
 
-        parameters = summary.index.to_list()
-
         HPDI_lower_bound_label, HPDI_upper_bound_label = Vide._get_HPDI_limits_label(
             credible_mass)
 
         minimum_full_range_HPDI = summary.loc[:, HPDI_lower_bound_label].min()
         maximum_full_range_HPDI = summary.loc[:, HPDI_upper_bound_label].max()
+
+        # Calculate the boundaries in forest plot - (Min)
+        if minimum_full_range_HPDI < 0:
+            minimum_full_range_HPDI = minimum_full_range_HPDI * 1.2
+
+        elif minimum_full_range_HPDI < 3:  # Arbitrary number, update if needed
+            minimum_full_range_HPDI = (minimum_full_range_HPDI - 4) * 1.5
+
+        else:
+            minimum_full_range_HPDI = minimum_full_range_HPDI * 0.50
+
+        # Calculate the boundaries in forest plot - (Max)
+        if maximum_full_range_HPDI > 0:
+            maximum_full_range_HPDI = maximum_full_range_HPDI * 1.2
+
+        elif maximum_full_range_HPDI > -3:  # Arbitrary number, update if needed
+            maximum_full_range_HPDI = (maximum_full_range_HPDI + 4) * 1.5
+
+        else:
+            maximum_full_range_HPDI = maximum_full_range_HPDI * 0.50
 
         index_to_line = len(summary)
 
@@ -416,23 +434,24 @@ class Vide:
         for parameter_name, summaries in summary.iterrows():
             # Plot dashed support line
             plt.plot(
-                [minimum_full_range_HPDI * 1.5, maximum_full_range_HPDI * 1.5],
+                [minimum_full_range_HPDI, maximum_full_range_HPDI],
                 [index_to_line, index_to_line],
-                ls='--', color='gray')
+                ls='--', color='gray', alpha=0.7)
 
             # Plot HPDI in blue line
             plt.plot([summaries[HPDI_lower_bound_label],
                       summaries[HPDI_upper_bound_label]],
                      [index_to_line, index_to_line],
-                     color='blue')
+                     color='darkblue', linewidth=3, alpha=0.4)
 
             # Plot mean point
-            plt.plot(summaries['mean'], index_to_line, 'ko')
+            plt.plot(summaries['mean'], index_to_line, 'ko', linewidth=10,
+                     alpha=0.5)
 
             # Plot parameter label
             plt.annotate(str(parameter_name),
-                         (minimum_full_range_HPDI * 1.5, index_to_line + 0.2),
-                         color='blue')
+                         (minimum_full_range_HPDI, index_to_line + 0.2),
+                         color='darkblue')
 
             index_to_line = index_to_line - 1  # Update the graph-floor index
 
