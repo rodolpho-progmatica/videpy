@@ -352,21 +352,27 @@ class Vide:
 
         summaries_posterioris = {}
 
-        parameters = posteriori_samples.param_names
+        for parameter in posteriori_samples:
+            # How many parameters exists in this parameter?
+            qty_index_in_parameter = len(posteriori_samples[parameter])
 
-        for parameter in parameters:
+            for j in range(qty_index_in_parameter):
+                
+                sampled_parameter_values = posteriori_samples[parameter][j].flatten()
 
-            sampled_parameter_values = posteriori_samples[parameter].flatten()
+                HPDI_parameter_value = Vide.HPDI(sampled_parameter_values, credible_mass)
 
-            HPDI_parameter_value = Vide.HPDI(sampled_parameter_values, credible_mass)
-
-            summary_parameter = {
-                'mean': round(sampled_parameter_values.mean(), rounded),
-                'std': round(sampled_parameter_values.std(), rounded),
-                HPDI_lower_bound_label : round(HPDI_parameter_value[0], rounded),
-                HPDI_upper_bound_label : round(HPDI_parameter_value[1], rounded),
-            }
-            summaries_posterioris[parameter] = summary_parameter
+                summary_parameter = {
+                    'mean': round(sampled_parameter_values.mean(), rounded),
+                    'std': round(sampled_parameter_values.std(), rounded),
+                    HPDI_lower_bound_label : round(HPDI_parameter_value[0], rounded),
+                    HPDI_upper_bound_label : round(HPDI_parameter_value[1], rounded),
+                }
+                if qty_index_in_parameter > 1:
+                    parameter_name = str(parameter)+"["+str(j)+"]"
+                    summaries_posterioris[parameter_name] = summary_parameter
+                else:
+                    summaries_posterioris[str(parameter)] = summary_parameter
             
         return pd.DataFrame.from_dict(summaries_posterioris, orient='index')
 
