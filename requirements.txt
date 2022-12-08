@@ -3,3 +3,4 @@ matplotlib
 pandas
 setuptools
 twine
+pytest>=7.2.0

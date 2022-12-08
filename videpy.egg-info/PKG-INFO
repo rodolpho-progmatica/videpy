@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: videpy
-Version: 0.0.5
+Version: 0.0.6
 Summary: Tools to handle samples posteriori from Stan (pystan)
 Home-page: https://github.com/rodolpho-progmatica/videpy
 Author: Rodolpho Macedo dos Santos
