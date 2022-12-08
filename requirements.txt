@@ -1,6 +1,11 @@
+pystan
 numpy
 matplotlib
 pandas
 setuptools
 twine
+<<<<<<< HEAD
 pytest>=7.2.0
+=======
+notebook
+>>>>>>> bb8304cc1b8cfda2fe3a19e7b2dc0f690984c538
